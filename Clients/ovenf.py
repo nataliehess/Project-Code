@@ -16,21 +16,23 @@ random_client_id = '<CLIENT_ID>'      #  set a random client_id (max 23 char)
 
 # Pins Setup
 
-buttonPin    = 7
-ledPin       = 12
-door_stat    = 21
-cur_temp     = 23
+
+door_stat    = 31
+cur_tempup     = 35
+cur_tempdown   =37
 cur_state    = 29
 temp_set     = 31
-door_set     = 33
-preheat_set  = 8
+temp_LED   =15
+door_set     = 11
+preheat_set  = 13
 
 GPIO.setmode(GPIO.BOARD)          # use P1 header pin numbering convention
 GPIO.cleanup()                    # clean up resources
 GPIO.setup(door_stat, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
-GPIO.setup(cur_temp, GPIO.IN)
+GPIO.setup(cur_tempup, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(cur_tempdown, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
 GPIO.setup(cur_state, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
-GPIO.setup(temp_set, GPIO.OUT)
+GPIO.setup(temp_LED, GPIO.OUT)
 GPIO.setup(door_set, GPIO.OUT)
 GPIO.setup(preheat_set,  GPIO.OUT)
 
@@ -68,17 +70,29 @@ def on_message(client, obj, msg):
     temp_set = json.loads(json_data)['oven'][1]['temp_set']
     preheat_set = json.loads(json_data)['oven'][0]['preheat_set']
     if door_set == 'on':
-        door_set = GPIO.HIGH
+        led_status = GPIO.HIGH
         GPIO.output(door_set, GPIO.HIGH)
     elif door_set == 'off':
         led_status = GPIO.LOW
-        GPIO.output(ledPin, GPIO.LOW)
+        GPIO.output(door_set, GPIO.LOW)
     if preheat_set == 'on':
-        door_set = GPIO.HIGH
-        GPIO.output(door_set, GPIO.HIGH)
-    elif(door_set == 'off'):
-        led_status = GPIO.LOW
-        GPIO.output(ledPin, GPIO.LOW)
+        preheat_status = GPIO.HIGH
+        GPIO.output(preheat_set, GPIO.HIGH)
+    elif(preheat_set == 'off'):
+        preheat_status = GPIO.LOW
+        GPIO.output(preheat_set, GPIO.LOW)
+    if cur_tempup == 'on':
+    	temp_set = temp_set+1
+    	temp_LED = GPIO.HIGH
+    	GPIO.output(temp_LED, GPIO.HIGH)
+    	temp_LED = GPIO.LOW
+    	GPIO.output(temp_LED, GPIO.LOW)
+    elif(cur_tempdown == 'off'):
+    	temp_set = temp_set-1
+    	temp_LED = GPIO.HIGH
+    	GPIO.output(temp_LED, GPIO.HIGH)
+    	temp_LED = GPIO.LOW
+    	GPIO.output(temp_LED, GPIO.LOW)
     print(temp_set)
 
     # confirm changes to 
@@ -160,4 +174,4 @@ client.publish(out_oven_door_stat, json.dumps(payload_door))
 client.publish(out_oven_cur_stat, json.dumps(payload_cur))
 client.publish(out_oven_cur_temp, json.dumps(payload_temp))
 
-print('rc: ' + str(rc)) 
+print('rc: ' + str(rc))
